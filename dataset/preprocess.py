@@ -1,9 +1,8 @@
-import json
 import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -24,7 +23,7 @@ def download_dataset(
         f.extractall(output_dir)
 
     os.remove(filename)
-    
+
     for folder in os.listdir(output_dir / wrapper_folder):
         shutil.move(output_dir / wrapper_folder / folder, output_dir / folder)
 
@@ -32,8 +31,8 @@ def download_dataset(
 
 
 def get_splits(
-    samples_per_class: List[List[str]], ratio: Tuple[int, int, int]
-) -> Dict[str, str]:
+    samples_per_class: list[list[str]], ratio: tuple[int, int, int]
+) -> dict[str, str]:
     splits = {}
     for class_samples in samples_per_class:
         n_samples = len(class_samples)
@@ -56,9 +55,9 @@ def get_splits(
 def get_samples_per_class(
     data_dir: Path,
     categories: list[str],
-    idx2label: Dict[int, str],
-    label2idx: Dict[str, int],
-) -> List[List[Path]]:
+    idx2label: dict[int, str],
+    label2idx: dict[str, int],
+) -> list[list[Path]]:
     samples_per_class = [[] for _ in range(len(idx2label))]
     for cat in categories:
         for img_path in os.listdir(data_dir / cat):
@@ -67,12 +66,14 @@ def get_samples_per_class(
     return samples_per_class
 
 
-def split_dataset(data_dir: Union[str, Path], ratio: Tuple[int, int, int]) -> None:
+def split_dataset(data_dir: Union[str, Path], ratio: tuple[int, int, int]) -> None:
     categories = [cat for cat in os.listdir(data_dir) if (data_dir / cat).is_dir()]
     idx2label = {idx: label for idx, label in enumerate(categories)}
     label2idx = {label: idx for idx, label in enumerate(categories)}
 
-    samples_per_class = get_samples_per_class(data_dir, categories, idx2label, label2idx)
+    samples_per_class = get_samples_per_class(
+        data_dir, categories, idx2label, label2idx
+    )
 
     splits = get_splits(samples_per_class, ratio)
 

@@ -82,6 +82,9 @@ class TrainingModule(pl.LightningModule):
         preds = logits.argmax(dim=-1)
         self.log(f"test/acc", self.test_acc(preds, targs))
         self.log(f'test/f1', self.test_f1(preds, targs))
+        # mainly used for optuna
+        loss = self.crit(logits, targs)
+        self.log(f"test/loss", loss.item())
 
     def configure_optimizers(self):
         return Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
@@ -150,6 +153,8 @@ def train(config: argparse.Namespace) -> None:
     )
     trainer.fit(training_module, dl_train, dl_valid)
 
+    return trainer.test(training_module, dl_valid)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -177,4 +182,5 @@ if __name__ == "__main__":
     config.split_ratio = [float(frac) for frac in config.split_ratio[0].split(",")]
     config.dataset_dir = Path(config.dataset_dir)
 
-    train(config)
+    score = train(config)
+    print(score)

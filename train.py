@@ -11,7 +11,7 @@ import torch.nn as nn
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, F1Score
 
 seed = 42
 random.seed(seed)
@@ -49,6 +49,10 @@ class TrainingModule(pl.LightningModule):
         self.valid_acc = Accuracy()
         self.test_acc = Accuracy()
 
+        self.train_f1 = F1Score(num_classes=3, average="weighted")
+        self.valid_f1 = F1Score(num_classes=3, average="weighted")
+        self.test_f1 = F1Score(num_classes=3, average="weighted")
+
     def training_step(self, batch, batch_idx):
         x, targs = batch
 
@@ -58,6 +62,7 @@ class TrainingModule(pl.LightningModule):
 
         self.log(f"train/loss", loss.item())
         self.log(f"train/acc", self.train_acc(preds, targs), prog_bar=True)
+        self.log(f'train/f1', self.train_f1(preds, targs), prog_bar=True)
 
         return loss
 
@@ -69,12 +74,14 @@ class TrainingModule(pl.LightningModule):
 
         self.log(f"valid/loss", loss.item())
         self.log(f"valid/acc", self.valid_acc(preds, targs))
+        self.log(f'valid/f1', self.valid_f1(preds, targs))
 
     def test_step(self, batch, batch_idx):
         x, targs = batch
         logits = self.model(x)
         preds = logits.argmax(dim=-1)
         self.log(f"test/acc", self.test_acc(preds, targs))
+        self.log(f'test/f1', self.test_f1(preds, targs))
 
     def configure_optimizers(self):
         return Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)

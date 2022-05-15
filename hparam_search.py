@@ -9,7 +9,7 @@ from train import train as train_fn
 
 
 class Objective:
-    def __init__(self, config: argparse.Namespace, n_epochs: int = 2) -> None:
+    def __init__(self, config: argparse.Namespace, n_epochs: int = 10) -> None:
         self.config = config
         self.config.n_epochs = n_epochs
 

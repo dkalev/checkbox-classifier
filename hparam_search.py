@@ -31,7 +31,7 @@ def search(config: argparse.Namespace) -> None:
     study = optuna.create_study(
         study_name="check_box_hparam_search", direction="minimize", sampler=sampler
     )
-    study.optimize(Objective(config), n_trials=2)
+    study.optimize(Objective(config), n_trials=config.n_trials)
 
     with open(config.log_dir / f"study_{int(time.time())}.pkl", "wb") as f:
         pkl.dump(study, f)
@@ -63,7 +63,8 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--weight_decay", type=float, default=0)
-    parser.add_argument("--num_workers", type=int, default=0)
+    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--n_trials", type=int, default=50)
 
     config = parser.parse_args()
     config.split_ratio = [float(frac) for frac in config.split_ratio[0].split(",")]

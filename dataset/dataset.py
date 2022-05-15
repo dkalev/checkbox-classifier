@@ -3,6 +3,7 @@ from typing import Any
 
 import pandas as pd
 import torchvision.transforms.functional as F
+import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -35,6 +36,21 @@ def get_split(
     return data_df.loc[data_df["split"] == split, subset].values.tolist()
 
 
+def get_dataset_stats(data_dir: Path, data_df: pd.DataFrame) -> list[list[float]]:
+    """Computes the mean and standard deviation of pixel values per channel
+
+    For a larger dataset running mean and std should be computed as it loads
+    the whole dataset into memory.
+    """
+    images = []
+    for fpath in data_df.filepath.values:
+        image = np.array(Image.open(data_dir / fpath).convert("RGB"))
+        image = image / 255.0
+        images.append(image.transpose(2, 0, 1).reshape(3, -1))
+    pixels_per_channel = np.concatenate(images, axis=1)
+    means = pixels_per_channel.mean(axis=-1)
+    stds = pixels_per_channel.std(axis=-1)
+    return list(means), list(stds)
 
 
 class SquarePad:
@@ -51,14 +67,22 @@ class SquarePad:
         return F.pad(image, padding, 0, "constant")
 
 
-data_augs = {
-    "common": [SquarePad(), transforms.ToTensor(), transforms.Resize(size=224)],
-    "image_net": [
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ],
-    "train": [
-        transforms.ColorJitter(),
-        transforms.RandomGrayscale(),
-        transforms.RandomAffine(degrees=0),  # no rotations
-    ],
-}
+def get_data_augs(data_dir: Path, data_df: pd.DataFrame) -> dict[str, list[Any]]:
+    ds_mean, ds_std = get_dataset_stats(data_dir, data_df)
+    return {
+        "common": [
+            SquarePad(),
+            transforms.ToTensor(),
+            transforms.Resize(size=(224, 224)),
+        ],
+        "baseline": [transforms.Normalize(mean=ds_mean, std=ds_std)],
+        "image_net": [
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ],
+        "train": [
+            transforms.ColorJitter(),
+            transforms.RandomGrayscale(),
+            transforms.RandomAffine(degrees=0),  # no rotations
+        ],
+    }
+

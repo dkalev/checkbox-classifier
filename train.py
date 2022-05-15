@@ -9,6 +9,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, F1Score
@@ -150,6 +151,7 @@ def train(config: argparse.Namespace) -> None:
         gpus=1 if torch.cuda.is_available() else None,
         logger=TensorBoardLogger(config.log_dir),
         log_every_n_steps=3,
+        callbacks=[EarlyStopping(monitor="valid/loss", mode="min")],
     )
     trainer.fit(training_module, dl_train, dl_valid)
 

@@ -82,6 +82,5 @@ def split_dataset(data_dir: Union[str, Path], ratio: tuple[int, int, int]) -> No
         for fpath in class_samples:
             res.append([fpath, label_idx, splits[fpath]])
     data_df = pd.DataFrame(res, columns=["filepath", "label", "split"])
-    data_df.set_index("filepath", inplace=True)
 
     return data_df, idx2label

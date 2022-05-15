@@ -1,6 +1,8 @@
 import argparse
 import pickle as pkl
 import time
+import numpy as np
+import traceback
 from pathlib import Path
 
 import optuna
@@ -22,8 +24,13 @@ class Objective:
         config.weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
         config.batch_size = trial.suggest_int("batch_size", 4, 64, log=True)
 
-        res = train_fn(config)
-        return res[0]["test/loss"]
+        try:
+            res = train_fn(config)
+            return res[0]["test/loss"]
+        except Exception:
+            print(traceback.format_exc())
+            return np.inf
+
 
 
 def search(config: argparse.Namespace) -> None:

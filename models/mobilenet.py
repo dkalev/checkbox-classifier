@@ -3,12 +3,12 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 
-from .base import Classifier
+from .base import BaseCNN, Classifier
 
 
-class MobileNetV2(nn.Module):
-    def __init__(self, pretrained: bool = True) -> None:
-        super().__init__()
+class MobileNetV2(BaseCNN):
+    def __init__(self, *args, pretrained: bool = True, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         mobilenet2 = torch.hub.load(
             "pytorch/vision:v0.10.0", "mobilenet_v2", pretrained=pretrained

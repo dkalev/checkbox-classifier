@@ -10,9 +10,7 @@ import torch
 import torch.nn as nn
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torchmetrics import Accuracy, F1Score
 
 seed = 42
 random.seed(seed)
@@ -30,73 +28,12 @@ from dataset import (
 from models import BaselineModel, MobileNetV2, ResNet50
 
 
-class TrainingModule(pl.LightningModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        crit: nn.Module,
-        *args,
-        lr: float = 1e-3,
-        weight_decay: float = 0,
-        **kwargs,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self.model = model
-        self.crit = crit
-        self.lr = lr
-        self.weight_decay = weight_decay
-
-        self.train_acc = Accuracy()
-        self.valid_acc = Accuracy()
-        self.test_acc = Accuracy()
-
-        self.train_f1 = F1Score(num_classes=3, average="weighted")
-        self.valid_f1 = F1Score(num_classes=3, average="weighted")
-        self.test_f1 = F1Score(num_classes=3, average="weighted")
-
-    def training_step(self, batch, batch_idx):
-        x, targs = batch
-
-        logits = self.model(x)
-        loss = self.crit(logits, targs)
-        preds = logits.argmax(dim=-1)
-
-        self.log(f"train/loss", loss.item())
-        self.log(f"train/acc", self.train_acc(preds, targs), prog_bar=True)
-        self.log(f'train/f1', self.train_f1(preds, targs), prog_bar=True)
-
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        x, targs = batch
-        logits = self.model(x)
-        loss = self.crit(logits, targs)
-        preds = logits.argmax(dim=-1)
-
-        self.log(f"valid/loss", loss.item())
-        self.log(f"valid/acc", self.valid_acc(preds, targs))
-        self.log(f'valid/f1', self.valid_f1(preds, targs))
-
-    def test_step(self, batch, batch_idx):
-        x, targs = batch
-        logits = self.model(x)
-        preds = logits.argmax(dim=-1)
-        self.log(f"test/acc", self.test_acc(preds, targs))
-        self.log(f'test/f1', self.test_f1(preds, targs))
-        # mainly used for optuna
-        loss = self.crit(logits, targs)
-        self.log(f"test/loss", loss.item())
-
-    def configure_optimizers(self):
-        return Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-
-
 def get_model(model_name: str) -> nn.Module:
     return {
         "baseline": BaselineModel,
         "mobilenet": MobileNetV2,
         "resnet50": ResNet50,
-    }[model_name]()
+    }[model_name]
 
 
 def train(config: argparse.Namespace) -> None:
@@ -121,7 +58,10 @@ def train(config: argparse.Namespace) -> None:
         ResNet50: data_augs["common"] + data_augs["image_net"],
     }
 
-    model = get_model(config.model)
+    model = get_model(config.model)(
+        lr=config.lr,
+        weight_decay=config.weight_decay
+    )
 
     ds_train = CheckBoxDataset(
         config.dataset_dir,
@@ -142,10 +82,6 @@ def train(config: argparse.Namespace) -> None:
         ds_valid, batch_size=config.batch_size, num_workers=config.num_workers
     )
 
-    training_module = TrainingModule(
-        model, nn.CrossEntropyLoss(), lr=config.lr, weight_decay=config.weight_decay
-    )
-
     trainer = pl.Trainer(
         max_epochs=config.n_epochs,
         gpus=1 if torch.cuda.is_available() else None,
@@ -153,9 +89,9 @@ def train(config: argparse.Namespace) -> None:
         log_every_n_steps=3,
         callbacks=[EarlyStopping(monitor="valid/loss", mode="min")],
     )
-    trainer.fit(training_module, dl_train, dl_valid)
+    trainer.fit(model, dl_train, dl_valid)
 
-    return trainer.test(training_module, dl_valid)
+    return trainer.test(model, dl_valid)
 
 
 if __name__ == "__main__":

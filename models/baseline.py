@@ -2,12 +2,12 @@ from collections import OrderedDict
 
 import torch.nn as nn
 
-from .base import Classifier
+from .base import BaseCNN, Classifier
 
 
-class BaselineModel(nn.Module):
-    def __init__(self, kernel_size: int = 3) -> None:
-        super().__init__()
+class BaselineModel(BaseCNN):
+    def __init__(self, *args, kernel_size: int = 3, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self.encoder = nn.Sequential(
             nn.Conv2d(3, 20, kernel_size=kernel_size, stride=2, bias=False),

@@ -67,13 +67,13 @@ class SquarePad:
         return F.pad(image, padding, 0, "constant")
 
 
-def get_data_augs(data_dir: Path, data_df: pd.DataFrame) -> dict[str, list[Any]]:
+def get_data_augs(data_dir: Path, data_df: pd.DataFrame, size: tuple[int] = (224, 224)) -> dict[str, list[Any]]:
     ds_mean, ds_std = get_dataset_stats(data_dir, data_df)
     return {
         "common": [
             SquarePad(),
             transforms.ToTensor(),
-            transforms.Resize(size=(224, 224)),
+            transforms.Resize(size),
         ],
         "baseline": [transforms.Normalize(mean=ds_mean, std=ds_std)],
         "image_net": [

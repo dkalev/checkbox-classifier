@@ -3,12 +3,12 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 
-from .base import Classifier
+from .base import BaseCNN, Classifier
 
 
-class ResNet50(nn.Module):
-    def __init__(self, pretrained: bool = True) -> None:
-        super().__init__()
+class ResNet50(BaseCNN):
+    def __init__(self, *args, pretrained: bool = True, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         
         resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=pretrained)
         self.encoder = nn.Sequential(

@@ -86,6 +86,7 @@ class Classifier(nn.Module):
             nn.Linear(in_channels, 100),
             nn.BatchNorm1d(100),
             nn.ReLU(inplace=True),
+            nn.Dropout(),
             nn.Linear(100, out_channels),
         )
 

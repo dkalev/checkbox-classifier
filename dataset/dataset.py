@@ -80,9 +80,8 @@ def get_data_augs(data_dir: Path, data_df: pd.DataFrame, size: tuple[int] = (224
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ],
         "train": [
-            transforms.ColorJitter(),
-            transforms.RandomGrayscale(),
-            transforms.RandomAffine(degrees=0),  # no rotations
+            transforms.ColorJitter(brightness=.2, hue=.1),
+            transforms.RandomAffine(translate=(0.1, 0.2), degrees=0),  # no rotations
         ],
     }
 

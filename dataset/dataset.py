@@ -1,9 +1,10 @@
+import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import torchvision.transforms.functional as F
-import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -67,21 +68,24 @@ class SquarePad:
         return F.pad(image, padding, 0, "constant")
 
 
-def get_data_augs(data_dir: Path, data_df: pd.DataFrame, size: tuple[int] = (224, 224)) -> dict[str, list[Any]]:
-    ds_mean, ds_std = get_dataset_stats(data_dir, data_df)
+def get_data_augs(
+    data_dir: Path, size: tuple[int] = (224, 224)
+) -> dict[str, list[Any]]:
+    with open(data_dir / "ds_stats.json") as f:
+        ds_stats = json.load(f)
+
     return {
         "common": [
             SquarePad(),
             transforms.ToTensor(),
             transforms.Resize(size),
         ],
-        "baseline": [transforms.Normalize(mean=ds_mean, std=ds_std)],
+        "baseline": [transforms.Normalize(mean=ds_stats["mean"], std=ds_stats["std"])],
         "image_net": [
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ],
         "train": [
-            transforms.ColorJitter(brightness=.2, hue=.1),
+            transforms.ColorJitter(brightness=0.2, hue=0.1),
             transforms.RandomAffine(translate=(0.1, 0.2), degrees=0),  # no rotations
         ],
     }
-

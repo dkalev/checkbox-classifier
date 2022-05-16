@@ -24,6 +24,7 @@ from dataset import (
     get_data_augs,
     get_split,
     split_dataset,
+    get_dataset_stats,
 )
 from models import BaselineModel, MobileNetV2, ResNet50
 
@@ -44,13 +45,17 @@ def train(config: argparse.Namespace) -> None:
         data_df.to_csv(config.dataset_dir / "splits.csv")
         with open(config.dataset_dir / "label_mapping.json", "w") as f:
             json.dump(idx2label, f)
+        ds_mean, ds_std = get_dataset_stats(config.dataset_dir, data_df)
+        with open(config.dataset_dir / "ds_stats.json", "w") as f:
+            json.dump({ "mean": ds_mean, "std": ds_std }, f)
+        
     else:
         data_df = pd.read_csv(config.dataset_dir / "splits.csv")
 
     images_train = get_split(data_df, "train")
     images_valid = get_split(data_df, "valid")
 
-    data_augs = get_data_augs(config.dataset_dir, data_df)
+    data_augs = get_data_augs(config.dataset_dir)
 
     model_data_augs = {
         BaselineModel: data_augs["common"] + data_augs["baseline"],

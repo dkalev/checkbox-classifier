@@ -96,7 +96,7 @@ def train(config: argparse.Namespace) -> None:
     )
     trainer.fit(model, dl_train, dl_valid)
 
-    return trainer.test(model, dl_valid)
+    return trainer.test(model, dl_valid, ckpt_path='best')
 
 
 if __name__ == "__main__":

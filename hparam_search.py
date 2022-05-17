@@ -22,7 +22,7 @@ class Objective:
         )
         config.lr = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
         config.weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
-        config.batch_size = trial.suggest_int("batch_size", 4, 64, log=True)
+        config.batch_size = trial.suggest_categorical("batch_size", [8,32,64])
 
         try:
             res = train_fn(config)

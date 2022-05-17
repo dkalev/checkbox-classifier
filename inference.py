@@ -13,7 +13,7 @@ from models import MobileNetV2
 app = FastAPI()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = MobileNetV2.load_from_checkpoint("https://drive.google.com/uc?export=download&id=1FKkPtQGu3i7EOMuH5qJWt5goV0Rwl21L")
+model = MobileNetV2.load_from_checkpoint("https://drive.google.com/uc?export=download&id=11dbv1XSgiR1QI50fzXwbZnRnfOPy_Ts3")
 model.to(device)
 model.eval()
 

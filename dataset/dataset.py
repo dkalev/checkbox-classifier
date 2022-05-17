@@ -65,7 +65,7 @@ class SquarePad:
         hp = int((max_wh - w) / 2)
         vp = int((max_wh - h) / 2)
         padding = (hp, vp, hp, vp)
-        return F.pad(image, padding, 0, "constant")
+        return F.pad(image, padding, 0, "reflect")
 
 
 def get_data_augs(
